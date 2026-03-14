@@ -1,0 +1,13 @@
+[project]
+name = "yesc"
+version = "1.0.1-alpha"
+description = "Yale Easy SIP Creator — CLI for creating XIP v6 SIPs for Preservica ingest"
+requires-python = ">=3.14"
+dependencies = [
+    "lxml",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
