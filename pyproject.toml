@@ -7,6 +7,9 @@ dependencies = [
     "lxml",
 ]
 
+[tool.setuptools]
+py-modules = ["yesc"]
+
 [dependency-groups]
 dev = [
     "pytest",
