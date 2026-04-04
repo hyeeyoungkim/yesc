@@ -326,11 +326,13 @@ def create_xip(args):
                     
                     
                     
-                       # check of creting identifier at so level
+                       # check of creating identifier at io level
                 if args.ioidtype:
+                    if len(args.ioidtype) != len(args.ioidvalue):
+                        raise ValueError("--ioidtype and --ioidvalue must be provided the same number of times")
                     id_entity = iobj_uuid
-                    id_iobj = gen_id(args, id_entity, 'io')
-                    xip_root.append(id_iobj)
+                    for typ, val in zip(args.ioidtype, args.ioidvalue):
+                        xip_root.append(gen_id(typ, val, id_entity))
             elif Path(file_to_pack).is_dir():
                 # when sub-dir found, recursive call to create sub-SO
                 create_xip_recurse(file_to_pack, iobj_parent_set)
@@ -523,12 +525,14 @@ def create_xip(args):
                     # storageconfig not used for single folder standard packages
                     print('ERROR - storageconfig cannot be used with this package type')
                     
-                       # check of creting identifier at so level
+                       # check of creating identifier at io level
                 if args.ioidtype:
+                    if len(args.ioidtype) != len(args.ioidvalue):
+                        raise ValueError("--ioidtype and --ioidvalue must be provided the same number of times")
                     id_entity = iobj_uuid
-                    id_iobj = gen_id(args, id_entity, 'io')
-                    xip_root.append(id_iobj)
-                    
+                    for typ, val in zip(args.ioidtype, args.ioidvalue):
+                        xip_root.append(gen_id(typ, val, id_entity))
+
             elif Path(file_to_pack).is_dir():
                 # if sub dirs found, call function to create new sub-SO
                 create_xip_recurse(file_to_pack, iobj_parent_set)
@@ -727,11 +731,13 @@ def create_xip(args):
             # storageconfig not used for single folder standard packages
             print('ERROR - storageconfig cannot be used with this package type')
             
-               # check of creting identifier at so level
+               # check of creating identifier at io level
         if args.ioidtype:
+            if len(args.ioidtype) != len(args.ioidvalue):
+                raise ValueError("--ioidtype and --ioidvalue must be provided the same number of times")
             id_entity = iobj_uuid
-            id_iobj = gen_id(args, id_entity, 'io')
-            xip_root.append(id_iobj)
+            for typ, val in zip(args.ioidtype, args.ioidvalue):
+                xip_root.append(gen_id(typ, val, id_entity))
  
     def mult_reps_pack(package_reps):
        
@@ -953,11 +959,13 @@ def create_xip(args):
                         pass
                     #print(k,v)
                 '''
-                   # check of creting identifier at so level
+                   # check of creating identifier at io level
             if args.ioidtype:
+                if len(args.ioidtype) != len(args.ioidvalue):
+                    raise ValueError("--ioidtype and --ioidvalue must be provided the same number of times")
                 id_entity = iobj_uuid
-                id_iobj = gen_id(args, id_entity, 'io')
-                xip_root.append(id_iobj)
+                for typ, val in zip(args.ioidtype, args.ioidvalue):
+                    xip_root.append(gen_id(typ, val, id_entity))
                     
                     
     
@@ -1109,11 +1117,13 @@ def create_xip(args):
         md_embed_sobj = embed_metadata(args.sometadata, meta_entity)
         xip_root.append(md_embed_sobj)
         
-    # check of creting identifier at so level
+    # check of creating identifier at so level
     if args.soidtype:
+        if len(args.soidtype) != len(args.soidvalue):
+            raise ValueError("--soidtype and --soidvalue must be provided the same number of times")
         id_entity = sobj_uuid
-        id_sobj = gen_id(args, id_entity, 'so')
-        xip_root.append(id_sobj)
+        for typ, val in zip(args.soidtype, args.soidvalue):
+            xip_root.append(gen_id(typ, val, id_entity))
    
         
         
@@ -1425,33 +1435,25 @@ def get_checksum(bs_file, args):
         hash_out = bs_hash.hexdigest()
     return hash_out, algo
 
-def gen_id(args, id_entity, obj_type):
-    if 'so' in obj_type:
-        id_type = args.soidtype
-        id_value = args.soidvalue
-    elif 'io' in obj_type:
-        id_type = args.ioidtype
-        id_value = args.ioidvalue
-        
-    # identifier sobj
-    id_obj =  et.Element('Identifier')
-  
-        
+def gen_id(arg_type, arg_value, id_entity):
+    # identifier element
+    id_obj = et.Element('Identifier')
+
     # type
-    id_obj_type =  et.Element('Type')
-    id_obj_type.text = id_type
+    id_obj_type = et.Element('Type')
+    id_obj_type.text = arg_type
     id_obj.append(id_obj_type)
-       
+
     # value
-    id_obj_val =  et.Element('Value')
-    id_obj_val.text = id_value
-    id_obj.append(id_obj_val)  
-        
+    id_obj_val = et.Element('Value')
+    id_obj_val.text = arg_value
+    id_obj.append(id_obj_val)
+
     # entity
-    id_obj_ent =  et.Element('Entity')
+    id_obj_ent = et.Element('Entity')
     id_obj_ent.text = id_entity
-    id_obj.append(id_obj_ent)        
-       
+    id_obj.append(id_obj_ent)
+
     return id_obj
 
 def embed_metadata(meta_file_embed, meta_entity):
@@ -1640,11 +1642,11 @@ if __name__ == "__main__":
     parser.add_argument("-sometadata", "-som", "--sometadata", help='Embed content of XML file as metadata linked to SO')
     parser.add_argument("-iometadata", "-iom", "--iometadata", help='Embed content of XML file as metadata linked to IO')
 
-    parser.add_argument("-ioidtype", "-ioidt", "--ioidtype", help='Identifier type for all IOs')
-    parser.add_argument("-ioidvalue", "-ioidv", "--ioidvalue", help='Identifier value for all IOs')
-    
-    parser.add_argument("-soidtype", "-soidt", "--soidtype", help='Identifier type for all SO')
-    parser.add_argument("-soidvalue", "-soidv", "--soidvalue", help='Identifier value for all SO')
+    parser.add_argument("-ioidtype", "-ioidt", "--ioidtype", action='append', help='Identifier type for all IOs, can be used multiple times')
+    parser.add_argument("-ioidvalue", "-ioidv", "--ioidvalue", action='append', help='Identifier value for all IOs, can be used multiple times')
+
+    parser.add_argument("-soidtype", "-soidt", "--soidtype", action='append', help='Identifier type for all SO, can be used multiple times')
+    parser.add_argument("-soidvalue", "-soidv", "--soidvalue", action='append', help='Identifier value for all SO, can be used multiple times')
 
     parser.add_argument("-representations", "-manifestations", "-r", "--representations", action='store_true', help='Structure should follow the multiple manifestation package definition with manifestation folders of the form *preservica_(presentation| preservation, use with -iot options to set IO title')
     parser.add_argument("-sipconfig", "-sc", "--sipconfig", help='Location of sip config, use with -r representations option')
