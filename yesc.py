@@ -28,6 +28,8 @@ sips_out_path = ''
 sip_report = {}
 package_parts = ''
 
+HASH_BUFFER_SIZE = 1048576  # 1MB — reduces syscalls on large files over network shares
+
 ## user set defaults
 default_security_tag = 'open'
 
@@ -1417,8 +1419,8 @@ def get_checksum(bs_file, args):
         
     
     with open(bs_file,"rb") as f:
-    # Read and update hash string value in blocks of 4K
-        for byte_block in iter(lambda: f.read(4096),b""):
+    # Read and update hash string value in blocks of HASH_BUFFER_SIZE (1MB)
+        for byte_block in iter(lambda: f.read(HASH_BUFFER_SIZE),b""):
             bs_hash.update(byte_block)
         hash_out = bs_hash.hexdigest()
     return hash_out, algo
