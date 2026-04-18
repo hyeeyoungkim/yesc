@@ -93,8 +93,8 @@ def create_protocol(content_path):
     
     return localAIPstr
     
-def create_xip(args):
-    ###    
+def create_xip(args, progress_callback=None):
+    ###
     def create_xip_recurse(content_path, parent_set):
         # create sub-SO or parent_set
         sobj =  et.Element('StructuralObject')
@@ -281,7 +281,9 @@ def create_xip(args):
                 
                 # fixity
                 hash_out, hash_algo = get_checksum(file_to_pack, args)
-                
+                if progress_callback:
+                    progress_callback("checksum", Path(file_to_pack).name)
+
                 ##fixitiy ALgo
                 bs_fixity_algo =  et.Element('FixityAlgorithmRef')
                 bs_fixity_algo.text = hash_algo
@@ -490,7 +492,9 @@ def create_xip(args):
                 
                 # fixity
                 hash_out, hash_algo = get_checksum(file_to_pack, args)
-                
+                if progress_callback:
+                    progress_callback("checksum", Path(file_to_pack).name)
+
                 ##fixitiy ALgo
                 bs_fixity_algo =  et.Element('FixityAlgorithmRef')
                 bs_fixity_algo.text = hash_algo
@@ -691,7 +695,9 @@ def create_xip(args):
                 
                 # fixity
                 hash_out, hash_algo = get_checksum(file_to_pack, args)
-                
+                if progress_callback:
+                    progress_callback("checksum", Path(file_to_pack).name)
+
                 ##fixitiy ALgo
                 bs_fixity_algo =  et.Element('FixityAlgorithmRef')
                 bs_fixity_algo.text = hash_algo
@@ -903,7 +909,9 @@ def create_xip(args):
                     
                     # fixity
                     hash_out, hash_algo = get_checksum(file_to_pack, args)
-                    
+                    if progress_callback:
+                        progress_callback("checksum", Path(file_to_pack).name)
+
                     ##fixitiy ALgo
                     bs_fixity_algo =  et.Element('FixityAlgorithmRef')
                     bs_fixity_algo.text = hash_algo
@@ -1291,6 +1299,8 @@ def create_xip(args):
                 print(sip_content_parent)
                 print(file_to_pack)
                 shutil.copy2(file_to_pack, sip_content_parent)
+                if progress_callback:
+                    progress_callback("copy", Path(file_to_pack).name)
                 
         
           
@@ -1605,17 +1615,17 @@ def include_files(file_name, list_to_exclude):
     
 
 
-def main(args):
-    global sips_out_path 
+def main(args, progress_callback=None):
+    global sips_out_path
 
     sips_out_path = os.path.join(args.output, '')
     data_in_path = os.path.join(args.input, '')
-    
-    # create .protocol file from input directory 
+
+    # create .protocol file from input directory
     create_protocol(data_in_path)
-    
+
     # create sip with all args
-    create_xip(args)
+    create_xip(args, progress_callback)
     
     # return dict built in reporting_std_out() for use by bulk packager
     return sip_report

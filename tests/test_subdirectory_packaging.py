@@ -181,3 +181,55 @@ class TestSubdirectoryPackaging:
         xip_text = ET.tostring(root, encoding="unicode")
         assert "brbl_active_archive" in xip_text, "Missing active_archive storage policy"
         assert "brbl_archive_glacier" in xip_text, "Missing archive_glacier storage policy"
+
+
+class TestProgressCallback:
+    """Test that yesc invokes progress_callback during checksum and copy phases."""
+
+    def test_callback_invoked_for_checksum_and_copy(self, tmp_path):
+        """Callback fires with phase='checksum' and phase='copy' for each file."""
+        input_dir = tmp_path / "input" / "item1"
+        proc_dir = input_dir / "processed"
+        proc_dir.mkdir(parents=True)
+        (proc_dir / "file1.tif").write_bytes(b"\x00" * 100)
+        (proc_dir / "file2.tif").write_bytes(b"\x00" * 200)
+
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+
+        events = []
+
+        def cb(phase, filename):
+            events.append((phase, filename))
+
+        args = _make_args(input_dir, output_dir)
+        yesc_main(args, progress_callback=cb)
+
+        checksum_events = [e for e in events if e[0] == "checksum"]
+        copy_events = [e for e in events if e[0] == "copy"]
+        assert len(checksum_events) >= 2, (
+            f"Expected >= 2 checksum events, got {len(checksum_events)}: {events}"
+        )
+        assert len(copy_events) >= 2, (
+            f"Expected >= 2 copy events, got {len(copy_events)}: {events}"
+        )
+
+        filenames = {filename for _, filename in events}
+        assert "file1.tif" in filenames
+        assert "file2.tif" in filenames
+
+    def test_callback_default_none_no_error(self, tmp_path):
+        """Calling main() without progress_callback works as before (backwards compat)."""
+        input_dir = tmp_path / "input" / "item1"
+        input_dir.mkdir(parents=True)
+        (input_dir / "file1.tif").write_bytes(b"\x00" * 100)
+
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+
+        args = _make_args(input_dir, output_dir)
+        yesc_main(args)  # no callback arg — must not error
+
+        tree = _parse_xip(output_dir)
+        ios = tree.getroot().findall("{http://preservica.com/XIP/v6.2}InformationObject")
+        assert len(ios) == 1
